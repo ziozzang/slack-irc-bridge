@@ -46,7 +46,7 @@ bot.config file is json format. you can check it sample.
 Usage
 =====
 ```
-./slack-irc-bridge  [configuratio_file]
+./slack-irc-bridge  [configuration_file]
 ```
 
 
