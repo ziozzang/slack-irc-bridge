@@ -68,6 +68,14 @@ func (i *Bot) SendMessage(nick, msg, channel string, flag bool) {
 	})
 }
 
+func (i *Bot) SendRawMessage(msg, to string) {
+	i.bot.SendMessage(&irc.Message{
+		Command:  "PRIVMSG",
+		Params:   []string{to},
+		Trailing: msg,
+	})
+}
+
 func (i *Bot) registerHandlers() {
 	// IRC Ping Pong handler
 	i.bot.AddCallback(irc.PING, ircx.Callback{
