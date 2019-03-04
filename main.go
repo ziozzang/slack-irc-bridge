@@ -23,6 +23,7 @@ type Slacks struct {
 type IRCs struct {
 	Server		string `json:"server"`
 	Nick		string `json:"nick"`
+	Pass		string `json:"pass"`
 	RelayNick	bool `json:"relay_nick"`
 }
 type Config struct {
@@ -84,6 +85,9 @@ func main() {
 		return
 	}
 
+	if conf.IRC.Pass != "" {
+		ircBot.SendRawMessage("identify "+conf.IRC.Pass, "NickServ")
+	}
 	for {
 		select {
 		case msg := <-ircEvents:
