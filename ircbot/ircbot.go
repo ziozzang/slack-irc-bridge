@@ -44,12 +44,12 @@ func (i *Bot) Start() (chan *MessageEvent, error) {
 }
 
 func insertNBS(s string) string {
-    var buffer bytes.Buffer
-    for _,rune := range s {
-       buffer.WriteRune(rune)
-       buffer.WriteRune('\u2060')
-    }
-    return buffer.String()
+	var buffer bytes.Buffer
+	for _, rune := range s {
+		buffer.WriteRune(rune)
+		buffer.WriteRune('\u2060')
+	}
+	return buffer.String()
 }
 
 func (i *Bot) SendMessage(nick, msg, channel string, relayNick bool) {
