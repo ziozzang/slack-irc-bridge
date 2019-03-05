@@ -52,10 +52,10 @@ func insertNBS(s string) string {
     return buffer.String()
 }
 
-func (i *Bot) SendMessage(nick, msg, channel string, flag bool) {
+func (i *Bot) SendMessage(nick, msg, channel string, relayNick bool) {
 	msgBuf := bytes.NewBufferString("")
 
-	if flag == true {
+	if relayNick == true {
 		fmt.Fprintf(msgBuf, "%s:%s", insertNBS(nick), msg)
 	} else {
 		fmt.Fprintf(msgBuf, "%s", msg)
