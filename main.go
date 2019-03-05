@@ -1,35 +1,39 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
-	"io/ioutil"
-	"encoding/json"
 
-	"./ircbot"
-	"github.com/voldyman/slackbot"
+	// This does not include the NSB hack that was added in ziozzang's fork
+	// This also adds WithLogin usage...
+	"github.com/josegonzalez/ircbot"
+
+	// Updates to latest nlopes/slack client
+	slackbot "github.com/josegonzalez/slackbot-1"
 )
 
 type Bridges struct {
-	Slack		string `json:"slack"`
-	IRC		string `json:"irc"`
+	Slack string `json:"slack"`
+	IRC   string `json:"irc"`
 }
 
 type Slacks struct {
-	Token		string `json:"token"`
-	URL		string `json:"url"`
+	Token string `json:"token"`
+	URL   string `json:"url"`
 }
 type IRCs struct {
-	Server		string `json:"server"`
-	Nick		string `json:"nick"`
-	Pass		string `json:"pass"`
-	RelayNick	bool `json:"relay_nick"`
+	Server    string `json:"server"`
+	Nick      string `json:"nick"`
+	Pass      string `json:"pass"`
+	RelayNick bool   `json:"relay_nick"`
 }
 type Config struct {
-	IRC		IRCs `json:"irc"`
-	Slack		Slacks `json:"slack"`
-	Bridge		[]Bridges `json:"bridges"`
+	IRC    IRCs      `json:"irc"`
+	Slack  Slacks    `json:"slack"`
+	Bridge []Bridges `json:"bridges"`
 }
 
 func (c *Config) String() string {
@@ -61,7 +65,7 @@ func main() {
 	if err != nil {
 		log.Println("load configuration failed, err:", err)
 		return
-        }
+	}
 
 	bridges := map[string]string{}
 	for _, m := range conf.Bridge {
@@ -78,16 +82,13 @@ func main() {
 		return
 	}
 
-	ircBot := ircbot.New(conf.IRC.Server, conf.IRC.Nick, Values(bridges))
+	ircBot := ircbot.New(conf.IRC.Server, conf.IRC.Nick, conf.IRC.Pass, Values(bridges))
 	ircEvents, err := ircBot.Start()
 	if err != nil {
 		fmt.Println("Could not connect to IRC")
 		return
 	}
 
-	if conf.IRC.Pass != "" {
-		ircBot.SendRawMessage("identify "+conf.IRC.Pass, "NickServ")
-	}
 	for {
 		select {
 		case msg := <-ircEvents:
@@ -117,7 +118,7 @@ func main() {
 					log.Println("Handling Message")
 
 					if target, ok := bridges[msg.Channel]; ok {
-						ircBot.SendMessage(msg.Sender, msg.Text, target, conf.IRC.RelayNick)
+						ircBot.SendMessage(msg.Sender, msg.Text, target)
 					}
 
 				}
