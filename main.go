@@ -2,10 +2,13 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/url"
 	"os"
+	"strings"
 
 	// This does not include the NSB hack that was added in ziozzang's fork
 	// This also adds WithLogin usage...
@@ -41,7 +44,16 @@ func (c *Config) String() string {
 	return string(data)
 }
 
-func LoadConfig(s string) (*Config, error) {
+func getenv(key string, defaultValue string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		value = defaultValue
+	}
+
+	return value
+}
+
+func LoadConfigFromFile(s string) (*Config, error) {
 	data, err := ioutil.ReadFile(s)
 	if err != nil {
 		return nil, err
@@ -53,20 +65,74 @@ func LoadConfig(s string) (*Config, error) {
 	return cConfig, nil
 }
 
-func main() {
-	filename := "bot.config"
+func LoadConfigFromEnv() (*Config, error) {
+	ircURL := getenv("IRC_URL", "irc://username:password@irc.freenode.org:6667?relay_nick=true")
+	slackURL := getenv("SLACK_URL")
+	slackToken := getenv("SLACK_TOKEN", "")
+	bridgeConfigs := getenv("BRIDGES", "")
+
+	if slackURL == "" {
+		return nil, errors.New("SLACK_URL environment variable not specified")
+	}
+	if slackToken == "" {
+		return nil, errors.New("SLACK_TOKEN environment variable not specified")
+	}
+	if bridgeConfigs == "" {
+		return nil, errors.New("BRIDGES environment variable not specified")
+	}
+
+	var bridges []Bridges
+	for _, bridgeConfig := range strings.Split(bridgeConfigs, ",") {
+		channels := strings.SplitN(bridgeConfig, ":", 2)
+		if len(channels) != 2 {
+			return nil, errors.New(fmt.Sprintf("Invalid channel config for %s", bridgeConfig))
+		}
+		bridges = append(bridges, Bridges{channels[0], channels[1]})
+	}
+
+	slacks := Slacks{slackToken, slackURL}
+	parsedURL, err := url.Parse(ircURL)
+	if err != nil {
+		return nil, err
+	}
+
+	username := parsedURL.User.Username()
+	password, ok := parsedURL.User.Password()
+	if !ok {
+		password = ""
+	}
+	relayNick := parsedURL.Query().Get("relay_nick") == "true"
+	server := fmt.Sprintf(parsedURL.Host)
+	ircs := IRCs{server, username, password, relayNick}
+	config := Config{ircs, slacks, bridges}
+	return &config, nil
+}
+
+func getConfig() (*Config, error) {
+	var filename string
 	if len(os.Args[1:]) > 0 {
 		filename = os.Args[1]
+	} else {
+		return LoadConfigFromEnv()
 	}
 
 	log.Println("loading configuration : ", filename)
 
-	conf, err := LoadConfig(filename)
+	conf, err := LoadConfigFromFile(filename)
 	if err != nil {
 		log.Println("load configuration failed, err:", err)
-		return
+		return nil, err
 	}
 
+	return conf, nil
+}
+
+func main() {
+	conf, err := getConfig()
+	if err != nil {
+		log.Println("load configuration failed, err:", err)
+		os.Exit(1)
+	}
 	bridges := map[string]string{}
 	for _, m := range conf.Bridge {
 		bridges[m.Slack] = m.IRC
