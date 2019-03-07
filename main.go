@@ -161,6 +161,7 @@ func main() {
 			log.Printf("IRC: <%s@%s> %s\n", msg.Sender, msg.Channel, msg.Text)
 
 			if target, ok := KeyForValue(bridges, msg.Channel); ok {
+				log.Println("Handling IRC Message")
 				slackBot.SendMessage(msg.Sender, target, msg.Text)
 				incUser(users, msg.Sender, target)
 			}
@@ -177,11 +178,11 @@ func main() {
 				if _, ok := bridges[msg.Channel]; !ok {
 					continue
 				}
-				log.Printf("slack: <%s@%s> %s\n", msg.Sender,
+				log.Printf("Slack: <%s@%s> %s\n", msg.Sender,
 					msg.Channel, msg.Text)
 
 				if shouldHandle(users, msg.Sender, msg.Channel) {
-					log.Println("Handling Message")
+					log.Println("Handling Slack Message")
 
 					if target, ok := bridges[msg.Channel]; ok {
 						ircBot.SendMessage(msg.Sender, msg.Text, target)
