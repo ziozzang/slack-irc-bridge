@@ -67,7 +67,7 @@ func LoadConfigFromFile(s string) (*Config, error) {
 
 func LoadConfigFromEnv() (*Config, error) {
 	ircURL := getenv("IRC_URL", "irc://username:password@irc.freenode.org:6667?relay_nick=true")
-	slackURL := getenv("SLACK_URL")
+	slackURL := getenv("SLACK_URL", "")
 	slackToken := getenv("SLACK_TOKEN", "")
 	bridgeConfigs := getenv("BRIDGES", "")
 
