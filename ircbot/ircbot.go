@@ -44,18 +44,18 @@ func (i *Bot) Start() (chan *MessageEvent, error) {
 }
 
 func insertNBS(s string) string {
-    var buffer bytes.Buffer
-    for _,rune := range s {
-       buffer.WriteRune(rune)
-       buffer.WriteRune('\u2060')
-    }
-    return buffer.String()
+	var buffer bytes.Buffer
+	for _, rune := range s {
+		buffer.WriteRune(rune)
+		buffer.WriteRune('\u2060')
+	}
+	return buffer.String()
 }
 
-func (i *Bot) SendMessage(nick, msg, channel string, flag bool) {
+func (i *Bot) SendMessage(nick, msg, channel string, relayNick bool) {
 	msgBuf := bytes.NewBufferString("")
 
-	if flag == true {
+	if relayNick == true {
 		fmt.Fprintf(msgBuf, "%s:%s", insertNBS(nick), msg)
 	} else {
 		fmt.Fprintf(msgBuf, "%s", msg)
@@ -65,6 +65,14 @@ func (i *Bot) SendMessage(nick, msg, channel string, flag bool) {
 		Command:  "PRIVMSG",
 		Params:   []string{channel},
 		Trailing: msgBuf.String(),
+	})
+}
+
+func (i *Bot) SendRawMessage(msg, to string) {
+	i.bot.SendMessage(&irc.Message{
+		Command:  "PRIVMSG",
+		Params:   []string{to},
+		Trailing: msg,
 	})
 }
 
